@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "vite",
         "preview": "vite preview",
-        "build-only": "vite build"
+        "build": "vite build"
     },
     "dependencies": {
         "gsap": "^3.12.2",
