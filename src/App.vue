@@ -23,7 +23,7 @@ type Rune = [StatLine, StatLine, StatLine, StatLine] | undefined;
 let type = ref('violent');
 let number: Ref<1 | 2 | 3 | 4 | 5 | 6> = ref(4);
 let property: Ref<Stat> = ref('cr');
-let innate: Ref<StatLine | undefined> = ref({ stat: 'accuracy', value: 8 });
+let innate: Ref<StatLine> = ref({ stat: 'accuracy', value: 8 });
 
 let _initialRune: Ref<Rune> = ref(undefined);
 let _rune: Ref<Rune> = ref(undefined);
@@ -135,6 +135,27 @@ watch([type, property, number, innate.value], () => {
     _initialRune.value = undefined;
     _rune.value = undefined;
 });
+
+watch(number, (newNumber) => {
+    property.value = undefined;
+    innate.value.stat = undefined;
+
+    switch (newNumber) {
+        case 1:
+            property.value = 'atk';
+            break;
+        case 3:
+            property.value = 'def';
+            break;
+        case 5:
+            property.value = 'hp';
+            break;
+    }
+});
+
+watch(property, () => {
+    innate.value.stat = undefined;
+});
 </script>
 
 <template>
@@ -180,7 +201,7 @@ watch([type, property, number, innate.value], () => {
                         <div class="d-flex gap-1">
                             <select
                                 v-model="innate.stat"
-                                @change="innate.value = null"
+                                @change="innate.value = undefined"
                             >
                                 <option
                                     v-for="option in [
@@ -189,6 +210,7 @@ watch([type, property, number, innate.value], () => {
                                     ]"
                                     :key="option"
                                     :value="option"
+                                    :disabled="option === property"
                                 >
                                     {{
                                         config.STAT_LABELS[option] ||
