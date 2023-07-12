@@ -32,6 +32,7 @@ const reappButtonDisabled = ref(false);
 const animationTrigger = ref(false);
 
 function createInitialRune() {
+    reappButtonDisabled.value = false;
     _rune.value = undefined;
     const randomRune = getRandomRune();
     const upgradedRune = upgradeRune(randomRune);
