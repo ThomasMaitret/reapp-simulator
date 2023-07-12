@@ -9,6 +9,10 @@ body {
     margin-top: 1rem;
 }
 
+.mt-2 {
+    margin-top: 2rem;
+}
+
 .mb-0 {
     margin-bottom: 0;
 }
@@ -27,4 +31,12 @@ body {
 
 .gap-1 {
     gap: 1rem;
+}
+
+.gap-2 {
+    gap: 2rem;
+}
+
+.text-center {
+    text-align: center;
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import config from './config';
-import { Ref, ref } from 'vue';
+import { Ref, onMounted, ref, watch } from 'vue';
 import JSConfetti from 'js-confetti';
 const jsConfetti = new JSConfetti();
 import { gsap } from 'gsap';
@@ -23,12 +23,23 @@ type Rune = [StatLine, StatLine, StatLine, StatLine] | undefined;
 let type = ref('violent');
 let number: Ref<1 | 2 | 3 | 4 | 5 | 6> = ref(4);
 let property: Ref<Stat> = ref('cr');
-let innate: Ref<StatLine> = ref({ stat: 'accuracy', value: 6 });
+let innate: Ref<StatLine | undefined> = ref({ stat: 'accuracy', value: 8 });
+
+let _initialRune: Ref<Rune> = ref(undefined);
 let _rune: Ref<Rune> = ref(undefined);
+
 const reappButtonDisabled = ref(false);
 const animationTrigger = ref(false);
 
-function createRune() {
+function createInitialRune() {
+    _rune.value = undefined;
+    const randomRune = getRandomRune();
+    const upgradedRune = upgradeRune(randomRune);
+    _initialRune.value = upgradedRune;
+}
+
+function reappRune() {
+    reappButtonDisabled.value = true;
     animationTrigger.value = !animationTrigger.value;
     const randomRune = getRandomRune();
     const upgradedRune = upgradeRune(randomRune);
@@ -39,7 +50,7 @@ function createRune() {
 function upgradeRune(rune: Rune) {
     for (let index = 0; index < config.PROCS; index++) {
         const randomIndex = Math.floor(Math.random() * 4);
-        const line = rune[randomIndex];
+        const line = rune![randomIndex];
         line.value = line.value + getStatUpgrade(line.stat);
     }
 
@@ -84,15 +95,6 @@ function showPourcentage(stat: Stat) {
     );
 }
 
-function clearConfig() {
-    type.value = null;
-    number.value = null;
-    property.value = null;
-    innate.value.stat = null;
-    innate.value.value = null;
-    _rune.value = null;
-}
-
 function checkIfHasHighStats(rune: Rune) {
     const hasHighStat = rune?.some((line) => {
         return (
@@ -106,11 +108,6 @@ function checkIfHasHighStats(rune: Rune) {
     });
     if (hasHighStat) {
         jsConfetti.addConfetti();
-        reappButtonDisabled.value = true;
-
-        setTimeout(() => {
-            reappButtonDisabled.value = false;
-        }, 1000);
     }
 }
 
@@ -128,6 +125,15 @@ function onEnter(el: gsap.TweenTarget) {
         },
     );
 }
+
+onMounted(() => {
+    createInitialRune();
+});
+
+watch([type, property, number, innate.value], () => {
+    _initialRune.value = undefined;
+    _rune.value = undefined;
+});
 </script>
 
 <template>
@@ -170,14 +176,23 @@ function onEnter(el: gsap.TweenTarget) {
 
                     <template v-if="property">
                         <label>Select an innate</label>
-                        <div class="innate-block">
-                            <select v-model="innate.stat">
+                        <div class="d-flex gap-1">
+                            <select
+                                v-model="innate.stat"
+                                @change="innate.value = null"
+                            >
                                 <option
-                                    v-for="option in config.STAT_TYPES"
+                                    v-for="option in [
+                                        ...config.STAT_TYPES,
+                                        undefined,
+                                    ]"
                                     :key="option"
                                     :value="option"
                                 >
-                                    {{ config.STAT_LABELS[option] }}
+                                    {{
+                                        config.STAT_LABELS[option] ||
+                                        'No innate'
+                                    }}
                                 </option>
                             </select>
                             <input
@@ -190,88 +205,134 @@ function onEnter(el: gsap.TweenTarget) {
                             />
                         </div>
 
-                        <div
-                            v-if="innate.stat && innate.value"
-                            class="d-flex gap-1"
+                        <button
+                            type="button"
+                            @click="createInitialRune()"
+                            :disabled="!type || !number || !property"
                         >
-                            <button
-                                type="button"
-                                @click="createRune()"
-                                :disabled="
-                                    !!_rune || !type || !number || !property
-                                "
-                            >
-                                Generate
-                            </button>
-                            <button type="button" @click="clearConfig()">
-                                Clear
-                            </button>
-                        </div>
+                            Generate
+                        </button>
                     </template>
                 </template>
             </template>
         </div>
 
-        <div class="rune-reapp">
-            <template v-if="_rune">
+        <div>
+            <div v-if="_initialRune">
                 <h3 class="mb-0 text-capitalize">
-                    {{ type }} rune ({{ number }})
-                </h3>
-                <h5 class="mb-0">
+                    {{ type }} rune (slot {{ number }}) -
                     {{ config.STAT_LABELS[property] }}
-                </h5>
-                <h6>
+                </h3>
+                <h6 class="mb-0" v-if="innate?.stat && innate.value">
                     {{ config.STAT_LABELS[innate.stat] }}: {{ innate.value
                     }}{{ showPourcentage(innate.stat) ? '%' : '' }}
                 </h6>
-            </template>
+            </div>
 
-            <div class="result">
-                <!-- <template v-if="_rune"> -->
-                <TransitionGroup
-                    :css="false"
-                    @enter="onEnter"
-                    :key="animationTrigger"
-                    appear
-                >
-                    <p
-                        v-for="(line, index) in _rune"
-                        :key="index"
-                        :data-index="index"
-                        :class="{
-                            'text-speed':
-                                line.stat === 'spd' && line.value >= 17,
-                            'text-speed-high':
-                                line.stat === 'spd' && line.value >= 20,
-                            'text-speed-highest':
-                                line.stat === 'spd' && line.value >= 23,
-                        }"
-                    >
-                        <span
-                            :style="{
-                                color:
-                                    line.stat === 'spd' && line.value >= 17
-                                        ? 'inherit'
-                                        : '#e7c984',
+            <div class="d-flex gap-2 mt-2">
+                <div class="initial-rune">
+                    <div class="result">
+                        <p
+                            v-for="(line, index) in _initialRune"
+                            :key="index"
+                            :data-index="index"
+                            :class="{
+                                'text-speed':
+                                    line.stat === 'spd' && line.value >= 17,
+                                'text-speed-high':
+                                    line.stat === 'spd' && line.value >= 20,
+                                'text-speed-highest':
+                                    line.stat === 'spd' && line.value >= 23,
                             }"
-                            >{{ config.STAT_LABELS[line.stat] }}</span
-                        >: {{ line.value
-                        }}{{ showPourcentage(line.stat) ? '%' : '' }}
-                    </p>
-                </TransitionGroup>
-                <!-- </template>
-                <div v-else>
-                    <p>--------</p>
-                    <p>--------</p>
-                    <p>--------</p>
-                    <p>--------</p>
-                </div> -->
+                        >
+                            <span
+                                :style="{
+                                    color:
+                                        line.stat === 'spd' && line.value >= 17
+                                            ? 'inherit'
+                                            : '#e7c984',
+                                }"
+                                >{{ config.STAT_LABELS[line.stat] }}</span
+                            >: {{ line.value
+                            }}{{ showPourcentage(line.stat) ? '%' : '' }}
+                        </p>
+                    </div>
+                    <button
+                        class="mt-1 secondary"
+                        type="button"
+                        @click="
+                            _rune = undefined;
+                            reappButtonDisabled = false;
+                        "
+                        :disabled="!_initialRune || !_rune"
+                    >
+                        Select
+                    </button>
+                </div>
+
+                <div class="rune-reapp">
+                    <div class="result">
+                        <!-- <template v-if="_rune"> -->
+                        <TransitionGroup
+                            :css="false"
+                            @enter="onEnter"
+                            :key="animationTrigger"
+                            appear
+                        >
+                            <p
+                                v-for="(line, index) in _rune"
+                                :key="index"
+                                :data-index="index"
+                                :class="{
+                                    'text-speed':
+                                        line.stat === 'spd' && line.value >= 17,
+                                    'text-speed-high':
+                                        line.stat === 'spd' && line.value >= 20,
+                                    'text-speed-highest':
+                                        line.stat === 'spd' && line.value >= 23,
+                                }"
+                            >
+                                <span
+                                    :style="{
+                                        color:
+                                            line.stat === 'spd' &&
+                                            line.value >= 17
+                                                ? 'inherit'
+                                                : '#e7c984',
+                                    }"
+                                    >{{ config.STAT_LABELS[line.stat] }}</span
+                                >: {{ line.value
+                                }}{{ showPourcentage(line.stat) ? '%' : '' }}
+                            </p>
+                        </TransitionGroup>
+                        <!-- </template>
+                        <div v-else>
+                            <p>--------</p>
+                            <p>--------</p>
+                            <p>--------</p>
+                            <p>--------</p>
+                        </div> -->
+                    </div>
+                    <button
+                        class="mt-1 secondary"
+                        type="button"
+                        @click="
+                            _initialRune = _rune;
+                            _rune = undefined;
+                            reappButtonDisabled = false;
+                        "
+                        :disabled="!_initialRune || !_rune"
+                    >
+                        Select
+                    </button>
+                </div>
             </div>
 
             <button
+                class="mt-1"
                 type="button"
-                @click="createRune()"
-                :disabled="!_rune || reappButtonDisabled"
+                @click="reappRune()"
+                :disabled="!_initialRune || reappButtonDisabled"
             >
                 Reappraisal
             </button>
@@ -284,25 +345,18 @@ function onEnter(el: gsap.TweenTarget) {
     align-items: center;
     width: fit-content;
     display: flex;
-    gap: 10rem;
+    gap: 12rem;
     height: 100vh;
 }
 
 .rune-config {
-    min-width: 200px;
+    min-width: 300px;
     min-height: 500px;
-}
-
-.rune-reapp {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
 }
 
 .result {
     display: flex;
     flex-direction: column;
-    margin-bottom: 2rem;
     padding: 1.5rem;
     border: 4px solid #808185;
     border-radius: 6px;
