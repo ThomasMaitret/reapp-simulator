@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import config from './config';
-import { Ref, onMounted, ref, watch } from 'vue';
+import { Ref, computed, onMounted, ref, watch } from 'vue';
 import JSConfetti from 'js-confetti';
 const jsConfetti = new JSConfetti();
 import { gsap } from 'gsap';
@@ -30,6 +30,14 @@ let _rune: Ref<Rune> = ref(undefined);
 
 const animationTrigger = ref(false);
 const enableAnimations = ref(true);
+const reappButtonDisabled = ref(false);
+
+const rune_types = computed(() => {
+    return config.RUNE_TYPES.sort((n) => {
+        if (['violent', 'will'].includes(n)) return -1;
+        return 1;
+    });
+});
 
 if (localStorage.getItem('enableAnimations')) {
     enableAnimations.value = JSON.parse(
@@ -103,7 +111,7 @@ function showPourcentage(stat: Stat) {
 function checkIfHasHighStats(rune: Rune) {
     const hasHighStat = rune?.some((line) => {
         return (
-            (line.stat === 'spd' && line.value >= 23) ||
+            (line.stat === 'spd' && line.value >= 22) ||
             (line.stat === 'hp%' && line.value >= 35) ||
             (line.stat === 'def%' && line.value >= 35) ||
             (line.stat === 'atk%' && line.value >= 35) ||
@@ -113,6 +121,11 @@ function checkIfHasHighStats(rune: Rune) {
     });
     if (hasHighStat) {
         jsConfetti.addConfetti();
+
+        reappButtonDisabled.value = true;
+        setTimeout(() => {
+            reappButtonDisabled.value = false;
+        }, 1000);
     }
 }
 
@@ -174,9 +187,14 @@ watch(enableAnimations, (value) => {
             <label>Select a type</label>
             <select v-model="type">
                 <option
-                    v-for="option in config.RUNE_TYPES"
+                    v-for="option in rune_types"
                     :key="option"
                     :value="option"
+                    :style="{
+                        color: ['violent', 'will'].includes(option)
+                            ? '#8ed38a'
+                            : 'inherit',
+                    }"
                 >
                     {{ option }}
                 </option>
@@ -352,7 +370,7 @@ watch(enableAnimations, (value) => {
             <button
                 type="button"
                 @click="reappRune()"
-                :disabled="!_initialRune"
+                :disabled="!_initialRune || reappButtonDisabled"
             >
                 Reappraisal
             </button>
@@ -426,7 +444,7 @@ select {
 
 .animations-checkbox {
     position: absolute;
-    right: 1rem;
+    left: 1rem;
     bottom: 1rem;
     font-size: 0.85rem;
 }
