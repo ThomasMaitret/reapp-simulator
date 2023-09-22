@@ -293,7 +293,7 @@ watch(enableAnimations, (value) => {
                         </p>
                     </div>
                     <button
-                        class="mt-1 secondary"
+                        class="mt-1 contrast"
                         type="button"
                         @click="_rune = undefined"
                         :disabled="!_initialRune || !_rune"
@@ -327,7 +327,7 @@ watch(enableAnimations, (value) => {
                         </TransitionGroup>
                     </div>
                     <button
-                        class="mt-1 secondary"
+                        class="mt-1 contrast"
                         type="button"
                         @click="
                             _initialRune = _rune;
@@ -379,7 +379,7 @@ watch(enableAnimations, (value) => {
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
-    border: 4px solid #808185;
+    border: 2px solid var(--secondary);
     border-radius: 6px;
     min-width: 300px;
     min-height: 305px;

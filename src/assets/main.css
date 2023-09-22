@@ -1,5 +1,22 @@
 @import './pico.min.css';
 
+[data-theme='light'],
+:root:not([data-theme='dark']) {
+    --primary: #3949ab;
+    --primary-hover: #303f9f;
+    --primary-focus: rgba(57, 73, 171, 0.125);
+    --primary-inverse: #fff;
+}
+
+@media only screen and (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --primary: #3949ab;
+        --primary-hover: #3f51b5;
+        --primary-focus: rgba(57, 73, 171, 0.25);
+        --primary-inverse: #fff;
+    }
+}
+
 html,
 body {
     font-size: 21px;
