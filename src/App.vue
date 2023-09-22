@@ -31,6 +31,7 @@ let _rune: Ref<Rune> = ref(undefined);
 const animationTrigger = ref(false);
 const enableAnimations = ref(true);
 const reappButtonDisabled = ref(false);
+const total = ref(0);
 
 const rune_types = computed(() => {
     return config.RUNE_TYPES.sort((n) => {
@@ -46,6 +47,7 @@ if (localStorage.getItem('enableAnimations')) {
 }
 
 function createInitialRune() {
+    total.value = 0;
     _rune.value = undefined;
     const randomRune = getRandomRune();
     const upgradedRune = upgradeRune(randomRune);
@@ -58,6 +60,8 @@ function reappRune() {
     const upgradedRune = upgradeRune(randomRune);
     checkIfHasHighStats(upgradedRune);
     _rune.value = upgradedRune;
+
+    total.value++;
 }
 
 function upgradeRune(rune: Rune) {
@@ -357,7 +361,19 @@ watch(enableAnimations, (value) => {
             name="disableAnimations"
             v-model="enableAnimations"
         />
-        <label for="disableAnimations">Enable animations</label>
+        <label
+            for="disableAnimations"
+            style="margin-left: 5px; margin-top: -3px"
+        >
+            Enable animations
+        </label>
+    </div>
+
+    <div class="total">
+        <span>Total reapps:</span> <strong>{{ total }}</strong>
+        <span @click="total = 0" class="reset-icon" title="Reset total">
+            ✕
+        </span>
     </div>
 </template>
 
@@ -412,8 +428,28 @@ select {
 
 .animations-checkbox {
     position: absolute;
-    left: 1rem;
-    bottom: 1rem;
-    font-size: 0.85rem;
+    left: 1.25rem;
+    bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.animations-checkbox:hover > label {
+    color: var(--h3-color);
+}
+
+.total {
+    position: absolute;
+    right: 1.25rem;
+    bottom: 1.25rem;
+}
+
+.reset-icon {
+    cursor: pointer;
+    margin-left: 0.3rem;
+}
+
+.reset-icon:hover {
+    font-weight: bold;
 }
 </style>
