@@ -72,4 +72,12 @@ export default {
         def: { min: 10, max: 20 },
         atk: { min: 10, max: 20 },
     },
+    EXCLUDE_TYPES: {
+        1: ['def', 'def%'],
+        2: [''],
+        3: ['atk', 'atk%'],
+        4: [''],
+        5: ['hp', 'hp%'],
+        6: [''],
+    },
 };

@@ -95,9 +95,7 @@ function getRandomRune() {
     }
 
     for (let index = 0; index < config.PROCS; index++) {
-        const statIndex = Math.floor(
-            Math.random() * (possibleStats.length - 1),
-        );
+        const statIndex = Math.floor(Math.random() * possibleStats.length);
         const stat = possibleStats[statIndex];
         rune.push({ stat, value: getStatUpgrade(stat) });
         possibleStats.splice(statIndex, 1);
@@ -148,6 +146,16 @@ function onEnter(el: gsap.TweenTarget) {
             },
         );
     }
+}
+
+function getInnates() {
+    const innates = config.STAT_TYPES.filter((innate) => {
+        return (
+            innate !== property.value &&
+            !config.EXCLUDE_TYPES[number.value].includes(innate)
+        );
+    });
+    return [...innates, undefined];
 }
 
 onMounted(() => {
@@ -228,16 +236,15 @@ watch(enableAnimations, (value) => {
                         <div class="d-flex gap-1">
                             <select
                                 v-model="innate.stat"
-                                @change="innate.value = undefined"
+                                @change="
+                                    innate.value =
+                                        config.RANGES[innate.stat].max
+                                "
                             >
                                 <option
-                                    v-for="option in [
-                                        ...config.STAT_TYPES,
-                                        undefined,
-                                    ]"
+                                    v-for="option in getInnates()"
                                     :key="option"
                                     :value="option"
-                                    :disabled="option === property"
                                 >
                                     {{
                                         config.STAT_LABELS[option] ||
