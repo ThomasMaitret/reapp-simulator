@@ -28,11 +28,16 @@ let innate: Ref<StatLine> = ref({ stat: 'accuracy', value: 8 });
 let _initialRune: Ref<Rune> = ref(undefined);
 let _rune: Ref<Rune> = ref(undefined);
 
-const reappButtonDisabled = ref(false);
 const animationTrigger = ref(false);
+const enableAnimations = ref(true);
+
+if (localStorage.getItem('enableAnimations')) {
+    enableAnimations.value = JSON.parse(
+        localStorage.getItem('enableAnimations') as string,
+    );
+}
 
 function createInitialRune() {
-    reappButtonDisabled.value = false;
     _rune.value = undefined;
     const randomRune = getRandomRune();
     const upgradedRune = upgradeRune(randomRune);
@@ -40,7 +45,6 @@ function createInitialRune() {
 }
 
 function reappRune() {
-    reappButtonDisabled.value = true;
     animationTrigger.value = !animationTrigger.value;
     const randomRune = getRandomRune();
     const upgradedRune = upgradeRune(randomRune);
@@ -113,18 +117,20 @@ function checkIfHasHighStats(rune: Rune) {
 }
 
 function onEnter(el: gsap.TweenTarget) {
-    gsap.fromTo(
-        el,
-        {
-            opacity: 0,
-            height: 0,
-        },
-        {
-            opacity: 1,
-            height: '100%',
-            delay: el.dataset.index * 0.25,
-        },
-    );
+    if (enableAnimations.value) {
+        gsap.fromTo(
+            el,
+            {
+                opacity: 0,
+                height: 0,
+            },
+            {
+                opacity: 1,
+                height: '100%',
+                delay: el.dataset.index * 0.25,
+            },
+        );
+    }
 }
 
 onMounted(() => {
@@ -155,6 +161,10 @@ watch(number, (newNumber) => {
 
 watch(property, () => {
     innate.value.stat = undefined;
+});
+
+watch(enableAnimations, (value) => {
+    localStorage.setItem('enableAnimations', JSON.stringify(value));
 });
 </script>
 
@@ -283,10 +293,7 @@ watch(property, () => {
                     <button
                         class="mt-1 secondary"
                         type="button"
-                        @click="
-                            _rune = undefined;
-                            reappButtonDisabled = false;
-                        "
+                        @click="_rune = undefined"
                         :disabled="!_initialRune || !_rune"
                     >
                         Select
@@ -295,7 +302,6 @@ watch(property, () => {
 
                 <div class="rune-reapp">
                     <div class="result">
-                        <!-- <template v-if="_rune"> -->
                         <TransitionGroup
                             :css="false"
                             @enter="onEnter"
@@ -328,13 +334,6 @@ watch(property, () => {
                                 }}{{ showPourcentage(line.stat) ? '%' : '' }}
                             </p>
                         </TransitionGroup>
-                        <!-- </template>
-                        <div v-else>
-                            <p>--------</p>
-                            <p>--------</p>
-                            <p>--------</p>
-                            <p>--------</p>
-                        </div> -->
                     </div>
                     <button
                         class="mt-1 secondary"
@@ -342,7 +341,6 @@ watch(property, () => {
                         @click="
                             _initialRune = _rune;
                             _rune = undefined;
-                            reappButtonDisabled = false;
                         "
                         :disabled="!_initialRune || !_rune"
                     >
@@ -352,14 +350,23 @@ watch(property, () => {
             </div>
 
             <button
-                class="mt-1"
                 type="button"
                 @click="reappRune()"
-                :disabled="!_initialRune || reappButtonDisabled"
+                :disabled="!_initialRune"
             >
                 Reappraisal
             </button>
         </div>
+    </div>
+
+    <div class="animations-checkbox">
+        <input
+            type="checkbox"
+            id="disableAnimations"
+            name="disableAnimations"
+            v-model="enableAnimations"
+        />
+        <label for="disableAnimations">Enable animations</label>
     </div>
 </template>
 
@@ -415,5 +422,12 @@ select {
     color: #46f13a;
     font-weight: bolder;
     font-size: 1.5rem;
+}
+
+.animations-checkbox {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    font-size: 0.85rem;
 }
 </style>
