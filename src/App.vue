@@ -190,11 +190,6 @@ watch(enableAnimations, (value) => {
                     v-for="option in rune_types"
                     :key="option"
                     :value="option"
-                    :style="{
-                        color: ['violent', 'will'].includes(option)
-                            ? '#8ed38a'
-                            : 'inherit',
-                    }"
                 >
                     {{ option }}
                 </option>
@@ -289,22 +284,11 @@ watch(enableAnimations, (value) => {
                             :data-index="index"
                             :class="{
                                 'text-speed':
-                                    line.stat === 'spd' && line.value >= 17,
-                                'text-speed-high':
                                     line.stat === 'spd' && line.value >= 20,
-                                'text-speed-highest':
-                                    line.stat === 'spd' && line.value >= 23,
                             }"
                         >
-                            <span
-                                :style="{
-                                    color:
-                                        line.stat === 'spd' && line.value >= 17
-                                            ? 'inherit'
-                                            : '#e7c984',
-                                }"
-                                >{{ config.STAT_LABELS[line.stat] }}</span
-                            >: {{ line.value
+                            <span>{{ config.STAT_LABELS[line.stat] }}: </span
+                            >{{ line.value
                             }}{{ showPourcentage(line.stat) ? '%' : '' }}
                         </p>
                     </div>
@@ -332,23 +316,12 @@ watch(enableAnimations, (value) => {
                                 :data-index="index"
                                 :class="{
                                     'text-speed':
-                                        line.stat === 'spd' && line.value >= 17,
-                                    'text-speed-high':
                                         line.stat === 'spd' && line.value >= 20,
-                                    'text-speed-highest':
-                                        line.stat === 'spd' && line.value >= 23,
                                 }"
                             >
                                 <span
-                                    :style="{
-                                        color:
-                                            line.stat === 'spd' &&
-                                            line.value >= 17
-                                                ? 'inherit'
-                                                : '#e7c984',
-                                    }"
-                                    >{{ config.STAT_LABELS[line.stat] }}</span
-                                >: {{ line.value
+                                    >{{ config.STAT_LABELS[line.stat] }}: </span
+                                >{{ line.value
                                 }}{{ showPourcentage(line.stat) ? '%' : '' }}
                             </p>
                         </TransitionGroup>
@@ -422,24 +395,19 @@ watch(enableAnimations, (value) => {
     margin-bottom: 0 !important;
 }
 
+.result p span {
+    font-weight: 300;
+    color: var(--h4-color);
+}
+
 select {
     text-transform: capitalize;
     min-width: fit-content;
 }
 
 .text-speed {
-    color: #8ed38a;
-}
-
-.text-speed-high {
     color: #60e857;
-    font-weight: bold;
-}
-
-.text-speed-highest {
-    color: #46f13a;
-    font-weight: bolder;
-    font-size: 1.5rem;
+    font-weight: bold !important;
 }
 
 .animations-checkbox {
