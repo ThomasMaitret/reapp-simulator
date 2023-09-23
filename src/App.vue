@@ -24,12 +24,11 @@ let type = ref('violent');
 let number: Ref<1 | 2 | 3 | 4 | 5 | 6> = ref(4);
 let property: Ref<Stat> = ref('cr');
 let innate: Ref<StatLine> = ref({ stat: 'accuracy', value: 8 });
-
 let _initialRune: Ref<Rune> = ref(undefined);
 let _rune: Ref<Rune> = ref(undefined);
 
 const animationTrigger = ref(false);
-const enableAnimations = ref(true);
+const enableAnimations = ref(false);
 const reappButtonDisabled = ref(false);
 const total = ref(0);
 
@@ -45,6 +44,13 @@ if (localStorage.getItem('enableAnimations')) {
         localStorage.getItem('enableAnimations') as string,
     );
 }
+
+const isDarkMode = ref(false);
+const isDarkPreferred =
+    localStorage.getItem('theme') === 'dark' ||
+    (window.matchMedia?.('(prefers-color-scheme: dark)')?.matches &&
+        !localStorage.getItem('theme'));
+setDarkTheme(isDarkPreferred);
 
 function createInitialRune() {
     total.value = 0;
@@ -156,6 +162,15 @@ function getInnates() {
         );
     });
     return [...innates, undefined];
+}
+
+function setDarkTheme(value: boolean) {
+    isDarkMode.value = value;
+    document.documentElement.setAttribute(
+        'data-theme',
+        value === true ? 'dark' : 'light',
+    );
+    localStorage.setItem('theme', value === true ? 'dark' : 'light');
 }
 
 onMounted(() => {
@@ -362,18 +377,32 @@ watch(enableAnimations, (value) => {
     </div>
 
     <div class="animations-checkbox">
-        <input
-            type="checkbox"
-            id="disableAnimations"
-            name="disableAnimations"
-            v-model="enableAnimations"
-        />
-        <label
-            for="disableAnimations"
-            style="margin-left: 5px; margin-top: -3px"
-        >
-            Enable animations
-        </label>
+        <div>
+            <input
+                type="checkbox"
+                id="switchTheme"
+                name="switchTheme"
+                :checked="isDarkMode"
+                @change="setDarkTheme(!isDarkMode)"
+            />
+            <label for="switchTheme" style="margin-left: 5px; margin-top: -3px">
+                Enable dark mode
+            </label>
+        </div>
+        <div class="mt-1">
+            <input
+                type="checkbox"
+                id="disableAnimations"
+                name="disableAnimations"
+                v-model="enableAnimations"
+            />
+            <label
+                for="disableAnimations"
+                style="margin-left: 5px; margin-top: -3px"
+            >
+                Enable animations
+            </label>
+        </div>
     </div>
 
     <div class="total">
@@ -437,6 +466,10 @@ select {
     position: absolute;
     left: 1.25rem;
     bottom: 1.25rem;
+}
+
+.animations-checkbox div {
+    width: 100%;
     display: flex;
     align-items: center;
 }
@@ -449,11 +482,13 @@ select {
     position: absolute;
     right: 1.25rem;
     bottom: 1.25rem;
+    font-size: 1.25rem;
 }
 
 .reset-icon {
     cursor: pointer;
     margin-left: 0.3rem;
+    font-size: 1.25rem;
 }
 
 .reset-icon:hover {
