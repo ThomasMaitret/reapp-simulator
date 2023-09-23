@@ -5,7 +5,7 @@ import JSConfetti from 'js-confetti';
 const jsConfetti = new JSConfetti();
 import { gsap } from 'gsap';
 
-type StatLine = { stat: Stat; value: number };
+type StatLine = { stat: Stat; value: number; procs: number };
 type Stat =
     | 'atk'
     | 'atk%'
@@ -23,7 +23,7 @@ type Rune = [StatLine, StatLine, StatLine, StatLine] | undefined;
 let type = ref('violent');
 let number: Ref<1 | 2 | 3 | 4 | 5 | 6> = ref(4);
 let property: Ref<Stat> = ref('cr');
-let innate: Ref<StatLine> = ref({ stat: 'accuracy', value: 8 });
+let innate: Ref<StatLine> = ref({ stat: 'accuracy', value: 8, procs: 1 });
 let _initialRune: Ref<Rune> = ref(undefined);
 let _rune: Ref<Rune> = ref(undefined);
 
@@ -64,7 +64,7 @@ function reappRune() {
     animationTrigger.value = !animationTrigger.value;
     const randomRune = getRandomRune();
     const upgradedRune = upgradeRune(randomRune);
-    checkIfHasHighStats(upgradedRune);
+    checkQuadRoll(upgradedRune);
     _rune.value = upgradedRune;
 
     total.value++;
@@ -75,6 +75,7 @@ function upgradeRune(rune: Rune) {
         const randomIndex = Math.floor(Math.random() * 4);
         const line = rune![randomIndex];
         line.value = line.value + getStatUpgrade(line.stat);
+        line.procs++;
     }
 
     return rune;
@@ -92,7 +93,7 @@ function randomIntFromInterval(min: number, max: number) {
 }
 
 function getRandomRune() {
-    const rune = [];
+    const rune: StatLine[] = [];
     const possibleStats = [...config.STAT_TYPES] as Stat[];
     possibleStats.splice(possibleStats.indexOf(property.value), 1);
 
@@ -103,7 +104,7 @@ function getRandomRune() {
     for (let index = 0; index < config.PROCS; index++) {
         const statIndex = Math.floor(Math.random() * possibleStats.length);
         const stat = possibleStats[statIndex];
-        rune.push({ stat, value: getStatUpgrade(stat) });
+        rune.push({ stat, value: getStatUpgrade(stat), procs: 0 });
         possibleStats.splice(statIndex, 1);
     }
 
@@ -116,24 +117,15 @@ function showPourcentage(stat: Stat) {
     );
 }
 
-function checkIfHasHighStats(rune: Rune) {
-    const hasHighStat = rune?.some((line) => {
-        return (
-            (line.stat === 'spd' && line.value >= 22) ||
-            (line.stat === 'hp%' && line.value >= 35) ||
-            (line.stat === 'def%' && line.value >= 35) ||
-            (line.stat === 'atk%' && line.value >= 35) ||
-            (line.stat === 'cd' && line.value >= 30) ||
-            (line.stat === 'cr' && line.value >= 25)
-        );
-    });
-    if (hasHighStat) {
+function checkQuadRoll(rune: Rune) {
+    const isQuadRoll = rune?.some((line) => line.procs === 4);
+    if (isQuadRoll) {
         jsConfetti.addConfetti();
 
         reappButtonDisabled.value = true;
         setTimeout(() => {
             reappButtonDisabled.value = false;
-        }, 1000);
+        }, 2000);
     }
 }
 
@@ -311,6 +303,7 @@ watch(enableAnimations, (value) => {
                             :class="{
                                 'text-speed':
                                     line.stat === 'spd' && line.value >= 20,
+                                'quad-roll': line.procs === 4,
                             }"
                         >
                             <span>{{ config.STAT_LABELS[line.stat] }}: </span
@@ -343,6 +336,7 @@ watch(enableAnimations, (value) => {
                                 :class="{
                                     'text-speed':
                                         line.stat === 'spd' && line.value >= 20,
+                                    'quad-roll': line.procs === 4,
                                 }"
                             >
                                 <span
@@ -458,6 +452,11 @@ select {
 }
 
 .text-speed {
+    color: #60e857;
+    font-weight: bold !important;
+}
+
+.quad-roll {
     color: #60e857;
     font-weight: bold !important;
 }
