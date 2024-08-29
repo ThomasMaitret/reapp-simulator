@@ -34,7 +34,7 @@ const total = ref(0);
 
 const rune_types = computed(() => {
     return config.RUNE_TYPES.sort((n) => {
-        if (['violent', 'will'].includes(n)) return -1;
+        if (['despair', 'swift', 'violent', 'will'].includes(n)) return -1;
         return 1;
     });
 });
@@ -96,6 +96,12 @@ function getRandomRune() {
     const rune: StatLine[] = [];
     const possibleStats = [...config.STAT_TYPES] as Stat[];
     possibleStats.splice(possibleStats.indexOf(property.value), 1);
+
+    if (config.EXCLUDE_TYPES[number.value].length > 0) {
+        for (const exclude of config.EXCLUDE_TYPES[number.value]) {
+            possibleStats.splice(possibleStats.indexOf(exclude as Stat), 1);
+        }
+    }
 
     if (innate.value) {
         possibleStats.splice(possibleStats.indexOf(innate.value.stat), 1);
@@ -209,6 +215,14 @@ watch(enableAnimations, (value) => {
                     v-for="option in rune_types"
                     :key="option"
                     :value="option"
+                    :class="{
+                        'text-speed': [
+                            'violent',
+                            'will',
+                            'swift',
+                            'despair',
+                        ].includes(option),
+                    }"
                 >
                     {{ option }}
                 </option>
