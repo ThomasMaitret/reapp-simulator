@@ -384,35 +384,6 @@ watch(enableAnimations, (value) => {
         </div>
     </div>
 
-    <div class="animations-checkbox">
-        <div>
-            <input
-                type="checkbox"
-                id="switchTheme"
-                name="switchTheme"
-                :checked="isDarkMode"
-                @change="setDarkTheme(!isDarkMode)"
-            />
-            <label for="switchTheme" style="margin-left: 5px; margin-top: -3px">
-                Enable dark mode
-            </label>
-        </div>
-        <div class="mt-1">
-            <input
-                type="checkbox"
-                id="disableAnimations"
-                name="disableAnimations"
-                v-model="enableAnimations"
-            />
-            <label
-                for="disableAnimations"
-                style="margin-left: 5px; margin-top: -3px"
-            >
-                Enable animations
-            </label>
-        </div>
-    </div>
-
     <div class="total">
         <span>Total reapps:</span> <strong>{{ total }}</strong>
         <span @click="total = 0" class="reset-icon" title="Reset total">
@@ -473,22 +444,6 @@ select {
 .quad-roll {
     color: #60e857;
     font-weight: bold !important;
-}
-
-.animations-checkbox {
-    position: absolute;
-    left: 1.25rem;
-    bottom: 1.25rem;
-}
-
-.animations-checkbox div {
-    width: 100%;
-    display: flex;
-    align-items: center;
-}
-
-.animations-checkbox:hover > label {
-    color: var(--h3-color);
 }
 
 .total {
