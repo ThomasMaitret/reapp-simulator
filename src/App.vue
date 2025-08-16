@@ -176,7 +176,7 @@ function setDarkTheme(value: boolean) {
 }
 
 onMounted(() => {
-    createInitialRune();
+    // createInitialRune();
 });
 
 watch([type, property, number, innate.value], () => {
@@ -211,166 +211,183 @@ watch(enableAnimations, (value) => {
 </script>
 
 <template>
-    <div class="container">
-        <div class="rune-config">
-            <label>Select a type</label>
-            <select v-model="type">
-                <option
-                    v-for="option in rune_types"
-                    :key="option"
-                    :value="option"
-                    :class="{
-                        'text-speed': [
-                            'violent',
-                            'will',
-                            'swift',
-                            'despair',
-                        ].includes(option),
-                    }"
-                >
-                    {{ option }}
-                </option>
-            </select>
-
-            <template v-if="type">
-                <label>Select a slot</label>
-                <select v-model="number">
+    <main class="container">
+        <div class="content grid gap-2">
+            <div class="rune-config">
+                <label>Select a type</label>
+                <select v-model="type">
                     <option
-                        v-for="option in config.RUNE_NUMBERS"
+                        v-for="option in rune_types"
                         :key="option"
                         :value="option"
+                        :class="{
+                            'text-speed': [
+                                'violent',
+                                'will',
+                                'swift',
+                                'despair',
+                            ].includes(option),
+                        }"
                     >
                         {{ option }}
                     </option>
                 </select>
 
-                <template v-if="number">
-                    <label>Select a property</label>
-                    <select v-model="property">
+                <template v-if="type">
+                    <label>Select a slot</label>
+                    <select v-model="number">
                         <option
-                            v-for="option in config.RUNE_PROPERTIES[number]"
+                            v-for="option in config.RUNE_NUMBERS"
                             :key="option"
                             :value="option"
                         >
-                            {{ config.STAT_LABELS[option] }}
+                            {{ option }}
                         </option>
                     </select>
 
-                    <template v-if="property">
-                        <label>Select an innate</label>
-                        <div class="d-flex gap-1">
-                            <select
-                                v-model="innate.stat"
-                                @change="
-                                    innate.value =
-                                        config.RANGES[innate.stat].max
-                                "
+                    <template v-if="number">
+                        <label>Select a property</label>
+                        <select v-model="property">
+                            <option
+                                v-for="option in config.RUNE_PROPERTIES[number]"
+                                :key="option"
+                                :value="option"
                             >
-                                <option
-                                    v-for="option in getInnates()"
-                                    :key="option"
-                                    :value="option"
-                                >
-                                    {{
-                                        config.STAT_LABELS[option] ||
-                                        'No innate'
-                                    }}
-                                </option>
-                            </select>
-                            <input
-                                v-if="innate.stat"
-                                type="number"
-                                v-model="innate.value"
-                                :min="config.RANGES[innate.stat].min"
-                                :max="config.RANGES[innate.stat].max"
-                                :disabled="!innate.stat"
-                            />
-                        </div>
+                                {{ config.STAT_LABELS[option] }}
+                            </option>
+                        </select>
 
-                        <button
-                            type="button"
-                            class="contrast"
-                            @click="createInitialRune()"
-                            :disabled="!type || !number || !property || !!_rune"
-                        >
-                            Generate
-                        </button>
+                        <template v-if="property">
+                            <label>Select an innate</label>
+                            <div class="d-flex gap-1">
+                                <select
+                                    v-model="innate.stat"
+                                    @change="
+                                        innate.value =
+                                            config.RANGES[innate.stat].max
+                                    "
+                                >
+                                    <option
+                                        v-for="option in getInnates()"
+                                        :key="option"
+                                        :value="option"
+                                    >
+                                        {{
+                                            config.STAT_LABELS[option] ||
+                                            'No innate'
+                                        }}
+                                    </option>
+                                </select>
+                                <input
+                                    v-if="innate.stat"
+                                    type="number"
+                                    v-model="innate.value"
+                                    :min="config.RANGES[innate.stat].min"
+                                    :max="config.RANGES[innate.stat].max"
+                                    :disabled="!innate.stat"
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                class="primary"
+                                @click="createInitialRune()"
+                            >
+                                Generate
+                            </button>
+                        </template>
                     </template>
                 </template>
-            </template>
-        </div>
-
-        <div>
-            <div v-if="_initialRune">
-                <h3 class="mb-0 text-capitalize">
-                    {{ type }} rune (slot {{ number }}) -
-                    {{ config.STAT_LABELS[property] }}
-                </h3>
-                <h6 class="mb-0" v-if="innate?.stat && innate.value">
-                    {{ config.STAT_LABELS[innate.stat] }}: {{ innate.value
-                    }}{{ showPourcentage(innate.stat) ? '%' : '' }}
-                </h6>
             </div>
-
-            <div class="d-flex gap-2 mt-2">
-                <div class="initial-rune">
-                    <div class="result">
-                        <p
-                            v-for="(line, index) in _initialRune"
-                            :key="index"
-                            :data-index="index"
-                            :class="{
-                                'text-speed':
-                                    line.stat === 'spd' && line.value >= 20,
-                                'quad-roll': line.procs === 4,
-                            }"
-                        >
-                            <span>{{ config.STAT_LABELS[line.stat] }}: </span
-                            >{{ line.value
-                            }}{{ showPourcentage(line.stat) ? '%' : '' }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="rune-reapp">
-                    <div class="result">
-                        <p
-                            v-for="(line, index) in _rune"
-                            :key="index"
-                            :data-index="index"
-                            :class="{
-                                'text-speed':
-                                    line.stat === 'spd' && line.value >= 20,
-                                'quad-roll': line.procs === 4,
-                            }"
-                        >
-                            <span>{{ config.STAT_LABELS[line.stat] }}: </span
-                            >{{ line.value
-                            }}{{ showPourcentage(line.stat) ? '%' : '' }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <button
-                type="button"
-                class="contrast mt-1"
-                style="user-select: none"
-                @click="reappRune()"
-                :disabled="!_initialRune || reappButtonDisabled"
-            >
-                Reapp
-            </button>
 
             <div>
-                <label>
-                    <input type="checkbox" v-model="lf_quad_spd" />
-                    Reapp until quad SPD
-                </label>
+                <div>
+                    <h5 class="mb-0 text-capitalize">
+                        {{ type }} - slot {{ number }} -
+                        {{ config.STAT_LABELS[property] }}
+                    </h5>
+                    <h6 class="mb-0" v-if="innate?.stat && innate.value">
+                        {{ config.STAT_LABELS[innate.stat] }}: {{ innate.value
+                        }}{{ showPourcentage(innate.stat) ? '%' : '' }}
+                    </h6>
+                </div>
+
+                <div>
+                    <div class="grid gap-1 mt-2">
+                        <div class="initial-rune">
+                            <div class="result">
+                                <p
+                                    v-for="(line, index) in _initialRune"
+                                    :key="index"
+                                    :data-index="index"
+                                    :class="{
+                                        'text-speed':
+                                            line.stat === 'spd' &&
+                                            line.value >= 20,
+                                        'quad-roll': line.procs === 4,
+                                    }"
+                                >
+                                    <span>
+                                        {{ config.STAT_LABELS[line.stat] }}:
+                                    </span>
+                                    {{ line.value
+                                    }}{{
+                                        showPourcentage(line.stat) ? '%' : ''
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="rune-reapp">
+                            <div class="result">
+                                <p
+                                    v-for="(line, index) in _rune"
+                                    :key="index"
+                                    :data-index="index"
+                                    :class="{
+                                        'text-speed':
+                                            line.stat === 'spd' &&
+                                            line.value >= 20,
+                                        'quad-roll': line.procs === 4,
+                                    }"
+                                >
+                                    <span
+                                        >{{
+                                            config.STAT_LABELS[line.stat]
+                                        }}: </span
+                                    >{{ line.value
+                                    }}{{
+                                        showPourcentage(line.stat) ? '%' : ''
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="contrast mt-1"
+                        style="user-select: none"
+                        @click="reappRune()"
+                        :disabled="!_initialRune || reappButtonDisabled"
+                    >
+                        Reapp
+                    </button>
+
+                    <div>
+                        <label style="user-select: none">
+                            <input
+                                type="checkbox"
+                                v-model="lf_quad_spd"
+                                :disabled="!_initialRune || reappButtonDisabled"
+                            />
+                            Reapp until quad SPD
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
+    </main>
     <div class="total">
         <span>Total reapps:</span> <strong>{{ total }}</strong>
         <span @click="total = 0" class="reset-icon" title="Reset total">
@@ -380,27 +397,27 @@ watch(enableAnimations, (value) => {
 </template>
 
 <style>
-.container {
-    align-items: center;
-    width: fit-content;
-    display: flex;
-    gap: 12rem;
+#app {
     height: 100vh;
 }
 
-.rune-config {
-    min-width: 300px;
-    min-height: 500px;
+.container {
+    height: 100%;
+}
+
+.content {
+    height: 100%;
+    align-items: center;
+    gap: 5rem;
 }
 
 .result {
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
-    border: 2px solid var(--secondary);
+    border: 1px solid var(--secondary);
     border-radius: 6px;
-    min-width: 300px;
-    min-height: 305px;
+    min-height: 300px;
     text-align: center;
 }
 
@@ -434,7 +451,7 @@ select {
 }
 
 .total {
-    position: absolute;
+    position: fixed;
     right: 1.25rem;
     bottom: 1.25rem;
     font-size: 1.25rem;
@@ -449,5 +466,29 @@ select {
 
 .reset-icon:hover {
     font-weight: bold;
+}
+
+@media only screen and (min-device-width: 320px) and (max-device-width: 480px) {
+    .container {
+        display: block;
+        width: auto;
+        height: auto;
+    }
+
+    .total {
+        position: relative;
+        padding: 2rem;
+        text-align: center;
+        right: auto;
+        bottom: auto;
+    }
+
+    .rune-config {
+        padding-top: 1rem;
+    }
+
+    .content {
+        gap: 2rem;
+    }
 }
 </style>
