@@ -3,6 +3,7 @@ import config from './config';
 import { Ref, computed, onMounted, ref, watch } from 'vue';
 import JSConfetti from 'js-confetti';
 const jsConfetti = new JSConfetti();
+import { gsap } from 'gsap';
 
 type StatLine = { stat: Stat; value: number; procs: number };
 type Stat =
@@ -28,7 +29,7 @@ let _rune: Ref<Rune> = ref(undefined);
 let lf_quad_spd: Ref<Boolean> = ref(false);
 
 const animationTrigger = ref(false);
-const enableAnimations = ref(false);
+const enableAnimations = ref(true);
 const reappButtonDisabled = ref(false);
 const total = ref(0);
 
@@ -149,6 +150,23 @@ function checkQuadRoll(rune: Rune) {
         setTimeout(() => {
             reappButtonDisabled.value = false;
         }, 1000);
+    }
+}
+
+function onEnter(el: gsap.TweenTarget) {
+    if (enableAnimations.value) {
+        gsap.fromTo(
+            el,
+            {
+                opacity: 0,
+                height: 0,
+            },
+            {
+                opacity: 1,
+                height: '100%',
+                delay: el.dataset.index * 0.25,
+            },
+        );
     }
 }
 
@@ -340,26 +358,35 @@ watch(enableAnimations, (value) => {
 
                         <div class="rune-reapp">
                             <div class="result">
-                                <p
-                                    v-for="(line, index) in _rune"
-                                    :key="index"
-                                    :data-index="index"
-                                    :class="{
-                                        'text-speed':
-                                            line.stat === 'spd' &&
-                                            line.value >= 20,
-                                        'quad-roll': line.procs === 4,
-                                    }"
+                                <TransitionGroup
+                                    :css="false"
+                                    @enter="onEnter"
+                                    :key="animationTrigger"
+                                    appear
                                 >
-                                    <span
-                                        >{{
-                                            config.STAT_LABELS[line.stat]
-                                        }}: </span
-                                    >{{ line.value
-                                    }}{{
-                                        showPourcentage(line.stat) ? '%' : ''
-                                    }}
-                                </p>
+                                    <p
+                                        v-for="(line, index) in _rune"
+                                        :key="index"
+                                        :data-index="index"
+                                        :class="{
+                                            'text-speed':
+                                                line.stat === 'spd' &&
+                                                line.value >= 20,
+                                            'quad-roll': line.procs === 4,
+                                        }"
+                                    >
+                                        <span
+                                            >{{
+                                                config.STAT_LABELS[line.stat]
+                                            }}: </span
+                                        >{{ line.value
+                                        }}{{
+                                            showPourcentage(line.stat)
+                                                ? '%'
+                                                : ''
+                                        }}
+                                    </p>
+                                </TransitionGroup>
                             </div>
                         </div>
                     </div>
