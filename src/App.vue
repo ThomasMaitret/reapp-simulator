@@ -3,7 +3,6 @@ import config from './config';
 import { Ref, computed, onMounted, ref, watch } from 'vue';
 import JSConfetti from 'js-confetti';
 const jsConfetti = new JSConfetti();
-import { gsap } from 'gsap';
 
 type StatLine = { stat: Stat; value: number; procs: number };
 type Stat =
@@ -26,6 +25,7 @@ let property: Ref<Stat> = ref('cr');
 let innate: Ref<StatLine> = ref({ stat: 'accuracy', value: 8, procs: 1 });
 let _initialRune: Ref<Rune> = ref(undefined);
 let _rune: Ref<Rune> = ref(undefined);
+let lf_quad_spd: Ref<Boolean> = ref(false);
 
 const animationTrigger = ref(false);
 const enableAnimations = ref(false);
@@ -62,12 +62,24 @@ function createInitialRune() {
 
 function reappRune() {
     animationTrigger.value = !animationTrigger.value;
+
+    let reappedRune = getReappedRune();
+    if (!lf_quad_spd.value) return reappedRune;
+
+    total.value = 0;
+
+    while (!isQuad(reappedRune, 'spd')) {
+        reappedRune = getReappedRune();
+    }
+}
+
+function getReappedRune() {
     const randomRune = getRandomRune();
     const upgradedRune = upgradeRune(randomRune);
     checkQuadRoll(upgradedRune);
     _rune.value = upgradedRune;
-
     total.value++;
+    return upgradedRune;
 }
 
 function upgradeRune(rune: Rune) {
@@ -125,31 +137,23 @@ function showPourcentage(stat: Stat) {
 
 function checkQuadRoll(rune: Rune) {
     const isQuadRoll = rune?.some((line) => line.procs === 4);
-    if (isQuadRoll) {
-        jsConfetti.addConfetti();
+    if (
+        (!lf_quad_spd.value && isQuadRoll) ||
+        (lf_quad_spd.value && isQuad(rune, 'spd'))
+    ) {
+        jsConfetti.addConfetti({
+            confettiNumber: 50,
+        });
 
         reappButtonDisabled.value = true;
         setTimeout(() => {
             reappButtonDisabled.value = false;
-        }, 2000);
+        }, 1000);
     }
 }
 
-function onEnter(el: gsap.TweenTarget) {
-    if (enableAnimations.value) {
-        gsap.fromTo(
-            el,
-            {
-                opacity: 0,
-                height: 0,
-            },
-            {
-                opacity: 1,
-                height: '100%',
-                delay: el.dataset.index * 0.25,
-            },
-        );
-    }
+function isQuad(rune: Rune, stat: Stat) {
+    return rune?.some((line) => line.stat === stat && line.procs === 4);
 }
 
 function getInnates() {
@@ -285,8 +289,9 @@ watch(enableAnimations, (value) => {
 
                         <button
                             type="button"
+                            class="contrast"
                             @click="createInitialRune()"
-                            :disabled="!type || !number || !property"
+                            :disabled="!type || !number || !property || !!_rune"
                         >
                             Generate
                         </button>
@@ -325,62 +330,44 @@ watch(enableAnimations, (value) => {
                             }}{{ showPourcentage(line.stat) ? '%' : '' }}
                         </p>
                     </div>
-                    <button
-                        class="mt-1 contrast"
-                        type="button"
-                        @click="_rune = undefined"
-                        :disabled="!_initialRune || !_rune"
-                    >
-                        Select
-                    </button>
                 </div>
 
                 <div class="rune-reapp">
                     <div class="result">
-                        <TransitionGroup
-                            :css="false"
-                            @enter="onEnter"
-                            :key="animationTrigger"
-                            appear
+                        <p
+                            v-for="(line, index) in _rune"
+                            :key="index"
+                            :data-index="index"
+                            :class="{
+                                'text-speed':
+                                    line.stat === 'spd' && line.value >= 20,
+                                'quad-roll': line.procs === 4,
+                            }"
                         >
-                            <p
-                                v-for="(line, index) in _rune"
-                                :key="index"
-                                :data-index="index"
-                                :class="{
-                                    'text-speed':
-                                        line.stat === 'spd' && line.value >= 20,
-                                    'quad-roll': line.procs === 4,
-                                }"
-                            >
-                                <span
-                                    >{{ config.STAT_LABELS[line.stat] }}: </span
-                                >{{ line.value
-                                }}{{ showPourcentage(line.stat) ? '%' : '' }}
-                            </p>
-                        </TransitionGroup>
+                            <span>{{ config.STAT_LABELS[line.stat] }}: </span
+                            >{{ line.value
+                            }}{{ showPourcentage(line.stat) ? '%' : '' }}
+                        </p>
                     </div>
-                    <button
-                        class="mt-1 contrast"
-                        type="button"
-                        @click="
-                            _initialRune = _rune;
-                            _rune = undefined;
-                        "
-                        :disabled="!_initialRune || !_rune"
-                    >
-                        Select
-                    </button>
                 </div>
             </div>
 
             <button
                 type="button"
+                class="contrast mt-1"
+                style="user-select: none"
                 @click="reappRune()"
                 :disabled="!_initialRune || reappButtonDisabled"
             >
-                Reappraisal
+                Reapp
             </button>
+
+            <div>
+                <label>
+                    <input type="checkbox" v-model="lf_quad_spd" />
+                    Reapp until quad SPD
+                </label>
+            </div>
         </div>
     </div>
 
@@ -451,6 +438,7 @@ select {
     right: 1.25rem;
     bottom: 1.25rem;
     font-size: 1.25rem;
+    user-select: none;
 }
 
 .reset-icon {
